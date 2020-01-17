@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# author: AntiTree
+
+function description() {
+    echo -e "\nDescription:\n   This plugin allows you to forward to adjacent network services exposed within the cluster.  \
+It can also help find services for you and help you forward to them.\n\n
+    kubectl net_forward [-i DESTIP] [-p DESTPORT] [-l LISTENPORT] [-n NAMESPACE] \n
+    \n - To choose a specific namespace to connect from run:\n\tkubectl net_forward -n YOURNAMESPACE
+    \n - To choose an IP to connect to run:\n\tkubectl net_forward -i 10.24.0.1
+    \n - To choose a port to connect to run:\n\tkubectl net_forward -p 80
+    \n - Set IP, port, and local listening port: \n\tkubect net_forward -i 10.24.0.1 -p 443 -l 8888
+    "
+    exit 0
+}
+
+function _kube_get_ips() {
+  # Get a list of pods
+  # Lookup their internal IPs
+  # Return list of pods and IPs exposed
+  echo "on the roadmap"
+}
+
+function _deploy_nmap() {
+  # Create an nmap pod
+  # Prompt to confirm which subnets (1.g. 10.23.0.0/16)
+  # Ping sweep the subnets
+  # create a status bar
+  # Collect the results
+  # return a table
+  echo "on the roadmap"
+}
+
+function _kube_list_pods() {
+  # get list of pods that are accessible
+  NS_ARG="--all-namespaces"
+  [[ -n "$1" ]] && NS_ARG="-n ${1}"
+  IFS=';' read -ra pods <<< "$(kubectl get pods $NS_ARG -o go-template='{{range .items}}{{.metadata.name}}:{{.metadata.namespace}}:{{.status.phase}}{{"\n"}}{{end}}' | sort -k 2 -k 1 -t: | tr '\n' ';')"
+
+  local count=1
+  lines=$(for i in ${pods[@]}; do
+    IFS=":" read -ra TOKS <<< "${i}"
+    printf "  $count) ${TOKS[0]}\t${TOKS[1]}\t${TOKS[2]}\n"
+    ((count=count+1))
+  done | column -t)
+  count=$(echo "$lines" | wc -l)
+  echo "$lines" >&2
+  local sel=0
+  while [[ $sel -lt 1 || $sel -gt $count ]]; do
+    read -p "Select a Pod: " sel >&2
+  done
+  echo "${pods[(sel-1)]}"
+}
+
+function _kube_list_pod_containers() {
+  echo "I'm in list containers"
+  POD=$1
+  NAMESPACE=$2
+  IFS=';' read -ra items <<< "$(kubectl get pod ${POD} -n ${NAMESPACE} -o go-template='{{range .spec.containers}}{{.name}}{{"\n"}}{{end}}' | tr '\n' ';')"
+  local count=1
+  lines=$(for i in ${items[@]}; do
+    printf "  $count) ${i}\n"
+    ((count=count+1))
+  done | column -t)
+  count=$(echo "$lines" | wc -l)
+  if [[ $count -gt 1 ]]; then
+    printf "\nPod has multiple containers:\n" >&2
+    echo "$lines" >&2
+    local sel=0
+    while [[ $sel -lt 1 || $sel -gt $count ]]; do
+      read -p "Select a Container: " sel >&2
+    done
+  fi
+  echo "${items[(sel-1)]}"
+}
+
+#SEL=$(_kube_list_pods)
+#IFS=":" read -ra POD <<< "${SEL}"
+
+
+while getopts "hn:i:p:l:" arg; do
+    case $arg in
+        n) # Add Namespace
+            export NAMESPACE="${OPTARG}"
+            ;;
+
+        i) # Add IP
+            export IP="${OPTARG}"
+            ;;
+
+        p) # Add port
+            export PORT="${OPTARG}"
+            ;;
+
+        h) # Show help
+            description
+            exit 1
+            ;;
+
+        l) # Adjust listener
+            export LISTENER="${OPTARG}"
+            ;;
+      esac
+done
+shift $((OPTIND-1))
+
+# Configure IP address
+if [ -z $IP ]; then
+  read -p "Enter a Destination IP address: " IP >&2
+fi
+
+# Configure port
+if [ -z $PORT ]; then
+  read -p "Enter Destination service port: [80] " PORT >&2
+  PORT=${PORT:-80}
+fi
+echo "Setting up connection to $IP:$PORT"
+
+# Defining local listening port
+if [ -z $LISTENER ]; then 
+  export LISTENER=9999
+fi
+
+# Kubectl command to run
+KUBECTL='kubectl'
+
+# Set namespace to use
+if [ -z ${NAMESPACE} ]; then
+  NAMESPACECMD=""
+else
+  NAMESPACECMD="-n $NAMESPACE"
+fi
+
+# Random pod name
+PODNAME=net-forward-socat
+
+# Deploy socat pod
+kubectl ${NAMESPACECMD} run --restart=Never --image=alpine/socat ${PODNAME} -- -d -d tcp-listen:${LISTENER},fork,reuseaddr tcp-connect:${IP}:${PORT}
+kubectl ${NAMESPACECMD} wait --for=condition=Ready pod/${PODNAME}
+
+echo "Forwarding connection to $NAMESPACE ${IP}:${PORT}. Access service on your local machine at 127.0.0.1:${LISTENER}"
+
+# Forward from the local system on the LISTENER port to the IP:PORT specified
+kubectl ${NAMESPACECMD} port-forward pod/${PODNAME} ${LISTENER}
+
+# Cleanup
+kubectl ${NAMESPACECMD} delete pod/${PODNAME}
+
