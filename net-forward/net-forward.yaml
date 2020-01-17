@@ -25,10 +25,10 @@ spec:
     # url for downloading the package archive:
     uri: https://github.com/antitree/krew-tools/releases/net-forward_v1.0.2.tar.gz
     # sha256sum of the above archive file:
-    sha256: "a1823b86eedea966e6673ee7377f69a1d65d12712a530759f6db4c6c0bdb08a7"
+    sha256: "2248c140613ce9a4796332744de6c37e82352929270bbd06b2ad6fde6e7c7f1c"
     # copy the used files out of the zip archive, defaults to `[{from: "*", to: "."}]`
     files:
-      - from: "/*/net_forward/*"
+      - from: "net-forward/*"
         to: "."
     bin: "kubectl-net_forward"  # path to the plugin executable after copying files above
   shortDescription: "Setup a true forwarder from your local machine to any TCP service accessible from within the cluster."
