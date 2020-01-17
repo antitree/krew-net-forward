@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# author: AntiTree
 
 function description() {
     echo -e "\nDescription:\n   This plugin allows you to forward to adjacent network services exposed within the cluster.  \
