@@ -2,12 +2,13 @@
 
 function description() {
     echo -e "\nDescription:\n   This plugin allows you to forward to adjacent network services exposed within the cluster.  \
-It can also help find services for you and help you forward to them.\n
+It can also help find services for you and help you forward to them.\n\n
+    kubectl net_forward [-i DESTIP] [-p DESTPORT] [-l LISTENPORT] [-n NAMESPACE] \n
     \n - To choose a specific namespace to connect from run:\n\tkubectl net_forward -n YOURNAMESPACE
     \n - To choose an IP to connect to run:\n\tkubectl net_forward -i 10.24.0.1
     \n - To choose a port to connect to run:\n\tkubectl net_forward -p 80
-    \n\n Example:\n 
-    \t kubectl net_forward -n test -i 10.24.0.1 -p 8080"
+    \n - Set IP, port, and local listening port: \n\tkubect net_forward -i 10.24.0.1 -p 443 -l 8888
+    "
     exit 0
 }
 
@@ -103,12 +104,12 @@ shift $((OPTIND-1))
 
 # Configure IP address
 if [ -z $IP ]; then
-  read -p "Enter an IP address: " IP >&2
+  read -p "Enter a Destination IP address: " IP >&2
 fi
 
 # Configure port
 if [ -z $PORT ]; then
-  read -p "Enter a port: [80] " PORT >&2
+  read -p "Enter Destination service port: [80] " PORT >&2
   PORT=${PORT:-80}
 fi
 echo "Setting up connection to $IP:$PORT"
