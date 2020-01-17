@@ -23,7 +23,7 @@ spec:
       matchLabels:
         os: linux
     # url for downloading the package archive:
-    uri: https://github.com/antitree/krew-tools/releases/net-forward_v1.0.2.tar.gz
+    uri: https://github.com/antitree/krew-tools/releases/krew-tools_v1.0.2.tar.gz
     # sha256sum of the above archive file:
     sha256: "2248c140613ce9a4796332744de6c37e82352929270bbd06b2ad6fde6e7c7f1c"
     # copy the used files out of the zip archive, defaults to `[{from: "*", to: "."}]`
