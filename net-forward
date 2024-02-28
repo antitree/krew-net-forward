@@ -131,7 +131,7 @@ else
 fi
 
 # Random pod name
-PODNAME=net-forward-socat
+PODNAME="net-forward-socat-$(env LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 6)"
 
 # Deploy socat pod
 kubectl ${NAMESPACECMD} run --restart=Never --image=alpine/socat ${PODNAME} -- -d -d tcp-listen:${LISTENER},fork,reuseaddr tcp-connect:${IP}:${PORT}
