@@ -4,11 +4,12 @@
 function description() {
     echo -e "\nDescription:\n   This plugin allows you to forward to adjacent network services exposed within the cluster.  \
 It can also help find services for you and help you forward to them.\n\n
-    kubectl net_forward [-i DESTIP] [-p DESTPORT] [-l LISTENPORT] [-n NAMESPACE] \n
-    \n - To choose a specific namespace to connect from run:\n\tkubectl net_forward -n YOURNAMESPACE
-    \n - To choose an IP to connect to run:\n\tkubectl net_forward -i 10.24.0.1
-    \n - To choose a port to connect to run:\n\tkubectl net_forward -p 80
-    \n - Set IP, port, and local listening port: \n\tkubect net_forward -i 10.24.0.1 -p 443 -l 8888
+    kubectl net-forward [-i DESTIP] [-p DESTPORT] [-l LISTENPORT] [-n NAMESPACE] [--image YOURIMAGE] \n
+    \n - To choose a specific namespace to connect from run:\n\tkubectl net-forward -n YOURNAMESPACE
+    \n - To choose an IP to connect to run:\n\tkubectl net-forward -i 10.24.0.1
+    \n - To choose a port to connect to run:\n\tkubectl net-forward -p 80
+    \n - Set IP, port, and local listening port: \n\tkubectl net-forward -i 10.24.0.1 -p 443 -l 8888
+    \n - Choose a custom image to run net-forward:\n\tkubectl net-forward --image YOURIMAGE
     "
     exit 0
 }
@@ -75,33 +76,46 @@ function _kube_list_pod_containers() {
 
 #SEL=$(_kube_list_pods)
 #IFS=":" read -ra POD <<< "${SEL}"
+custom_image=""
 
+while [ $# -gt 0 ]; do
+  key="$1"
 
-while getopts "hn:i:p:l:" arg; do
-    case $arg in
-        n) # Add Namespace
-            export NAMESPACE="${OPTARG}"
-            ;;
-
-        i) # Add IP
-            export IP="${OPTARG}"
-            ;;
-
-        p) # Add port
-            export PORT="${OPTARG}"
-            ;;
-
-        h) # Show help
-            description
-            exit 1
-            ;;
-
-        l) # Adjust listener
-            export LISTENER="${OPTARG}"
-            ;;
-      esac
+  case $key in
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift
+      shift
+      ;;
+    -i|--ip)
+      IP="$2"
+      shift
+      shift
+      ;;
+    -p|--port)
+      PORT="$2"
+      shift
+      shift
+      ;;
+    -l|--listener)
+      LISTENER="$2"
+      shift
+      shift
+      ;;
+    --image)
+      custom_image="$2"
+      shift
+      shift
+      ;;
+    -h|--help)
+      description
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
 done
-shift $((OPTIND-1))
 
 # Configure IP address
 if [ -z $IP ]; then
@@ -131,10 +145,19 @@ else
 fi
 
 # Random pod name
-PODNAME="net-forward-socat-$(env LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 6)"
+PODNAME="net-forward-$(env LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 6)"
+
+# Set image
+default_image="alpine/socat"
+IMAGE=${custom_image:-${default_image}}
 
 # Deploy socat pod
-kubectl ${NAMESPACECMD} run --restart=Never --image=alpine/socat ${PODNAME} -- -d -d tcp-listen:${LISTENER},fork,reuseaddr tcp-connect:${IP}:${PORT}
+if [ -z ${custom_image} ]; then
+  kubectl ${NAMESPACECMD} run --restart=Never --image=${IMAGE} ${PODNAME} -- -d -d tcp-listen:${LISTENER},fork,reuseaddr tcp-connect:${IP}:${PORT}
+else
+  kubectl ${NAMESPACECMD} run --restart=Never --image=${IMAGE} ${PODNAME} -- socat -d -d tcp-listen:${LISTENER},fork,reuseaddr tcp-connect:${IP}:${PORT}
+fi
+
 kubectl ${NAMESPACECMD} wait --for=condition=Ready pod/${PODNAME}
 
 echo "Forwarding connection to $NAMESPACE ${IP}:${PORT}. Access service on your local machine at 127.0.0.1:${LISTENER}"

@@ -32,6 +32,11 @@ Make a local forwarder inside the "testing" namespace and have it connect to an 
 
 `kubectl net-forward -n testing -i 10.23.10.3 -p 80`
 
+Use net-forward with a custom image:
+
+`kubectl net-forward --image alpine`
+- custom container images must have the socat package installed
+
 ## Details
 
 This works the same way as `port-forward`, when you run this, it will create a 
