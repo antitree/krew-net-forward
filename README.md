@@ -36,7 +36,7 @@ Use net-forward with a custom image:
 
 `kubectl net-forward --image alpine`
 - custom container images must have the socat package installed
-- you can also set the NET_FORWARD_IMAGE env variable to avoid using the --image flag every time you run `kubectl net-forward` 
+- you can also set the KUBECTL_NET_FORWARD_IMAGE env variable to avoid using the --image flag every time you run `kubectl net-forward` 
 
 ## Details
 
