@@ -149,7 +149,7 @@ PODNAME="net-forward-$(env LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 6)"
 
 # Set image
 default_image="alpine/socat"
-IMAGE=${custom_image:-${NET_FORWARD_IMAGE:-$default_image}}
+IMAGE=${custom_image:-${KUBECTL_NET_FORWARD_IMAGE:-$default_image}}
 
 # Deploy socat pod
 if [ -z ${custom_image} ]; then
