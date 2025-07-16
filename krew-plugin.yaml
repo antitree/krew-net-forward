@@ -1,0 +1,22 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: net-forward
+spec:
+  version: {{VERSION}}
+  platforms:
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    uri: https://github.com/{{REPO_OWNER}}/krew-net-forward/releases/download/{{VERSION}}/net-forward_{{VERSION}}.tar.gz
+    sha256: {{SHA256}}
+    files:
+    - from: net-forward
+      to: .
+    bin: net-forward
+    shortDesc: Forward to arbitrary cluster endpoints
+    description: |
+      net-forward lets you create a local TCP listener that forwards
+      traffic to any reachable IP inside the Kubernetes cluster.
+    homepage: https://github.com/{{REPO_OWNER}}/krew-net-forward

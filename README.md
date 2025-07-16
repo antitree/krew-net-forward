@@ -68,3 +68,20 @@ of things. I personnly like doing it because I have all of my favorite testing t
 laptop and now can just point it another service in the cluster without having to tool up a Pod
 or deploy a custom image. 
 
+
+## Release workflow
+
+Releases are created from git tags. Once a tag that starts with `v` is pushed,
+GitHub Actions builds a tarball that contains the plugin script and attaches it
+to the GitHub release. The version of the release is taken from the tag name.
+
+To produce a new release:
+
+1. Update the repository as needed and commit the changes.
+2. Create a new tag following the `v<major>.<minor>.<patch>` pattern, e.g.
+   `git tag v1.2.3`.
+3. Push the tag to GitHub: `git push origin v1.2.3`.
+
+The workflow packages `net-forward` into `net-forward_<version>.tar.gz` and
+publishes it with the release. This artifact can be referenced from the
+krew-index repository.

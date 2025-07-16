@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Build package
+        run: |
+          make package VERSION=${VERSION}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: net-forward-${{ env.VERSION }}
+          path: |
+            net-forward_*.tar.gz
+            net-forward_*.tar.gz.sha256
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            net-forward_*.tar.gz
+            net-forward_*.tar.gz.sha256
