@@ -13,9 +13,10 @@ all: package manifest
 build:
 >mkdir -p $(BUILD_DIR)
 >cp $(PLUGIN) $(BUILD_DIR)/
+>cp LICENSE $(BUILD_DIR)/
 
 package: build
->tar -czf $(TARBALL) -C $(BUILD_DIR) $(PLUGIN)
+>tar -czf $(TARBALL) -C $(BUILD_DIR) $(PLUGIN) LICENSE
 >sha256sum $(TARBALL) > $(TARBALL).sha256
 
 manifest: package
